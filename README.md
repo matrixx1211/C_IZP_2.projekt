@@ -17,13 +17,12 @@ Argument CMD_SEQUENCE je jeden argument obsahující sekvenci příkazů. Více 
 Argument FILE specifikuje název souboru s tabulkou.
 
 ## Progres zpracování
-
 ### Základní operace
-- [ ] **Načtení souboru**
-- [ ] **Uzavření souboru**
-- [ ] ** **
-- [ ] ** **
-- [ ] ** **
+- [x] **Načtení souboru**
+- [x] **Uzavření souboru**
+- [x] **Kontrola zadaných argumentů**
+- [x] **Nalezení delimu**
+- [ ] **Rozdělit data ze souboru do buněk**
 - [ ] ** **
 - [ ] ** **
 

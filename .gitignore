@@ -4,3 +4,6 @@
 
 # Input
 *.txt
+
+# Test
+x.c
