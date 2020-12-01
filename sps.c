@@ -19,6 +19,7 @@ typedef struct
 {
     int rowCount;
     int colCount;
+    int cellCount;
     char **cell;
 } array;
 
@@ -92,40 +93,168 @@ void arrayConstruct(array *data)
     data->cell = NULL;
     data->rowCount = 0;
     data->colCount = 0;
+    data->cellCount = 0;
 }
 
 /* Zvětšení pole o danou velikost */
-void resizeArray(array *data, FILE *inputFile)
+char *resizeArrayBy(array *data, int by)
 {
+    char *reallocPointer = realloc(data->cell, by * data->cellCount);
+    if (reallocPointer == NULL)
+    {
+        fprintf(stderr, "Realokace se neprovedla");
+    }
+    else
+        data->cell[data->cellCount];
+}
+
+void mat_alloc(array *data)
+{
+    data->cell = malloc(data->colCount * data->rowCount * sizeof(char *));
+    if (data->cell == NULL)
+    {
+        printf("Malloc fail!");
+        return;
+    }
+    for (int i = 0; i < (data->colCount * data->rowCount); i++)
+    {
+        data->cell[i] = malloc(sizeof(char));
+        if (data->cell[i] == NULL)
+        {
+            printf("Malloc fail!");
+            //mat_clear(tab, i);
+            return;
+        }
+    }
 }
 
 /* Rozdělí data ze souboru do 2D pole */
-void fileToArray(array *data, FILE *inputFile, char const *delim)
+int fileToArray(array *data, FILE *inputFile, char const *delim)
 {
-    //bude číst soubor
+    char character;
+    int cols = 0;
+    while ((character = fgetc(inputFile)) != EOF)
+    {
+        if (character == '\n')
+        {
+            data->rowCount++;
+            cols++;
+            data->colCount = cols;
+            cols = 0;
+        }
+        for (unsigned i = 0; i < strlen(delim); i++)
+        {
+            if (delim[i] == character)
+            {
+                cols++;
+            }
+        }
+    }
+    printf("Pocet sloupcu: %d\n", data->colCount);
+    printf("Pocet radku: %d\n", data->rowCount);
+
+    mat_alloc(data);
+
+    printf("Alokace se provedla\n");
+
+    fseek(inputFile, 0, SEEK_SET);
+
+    int currentCell = 0;
+    int stringLength = 1;
+    int isDelim = 0;
+
+    while ((character = fgetc(inputFile)) != EOF)
+    {
+        if (character == '\n')
+        {
+            data->cell[currentCell][stringLength - 1] = '\0';
+            currentCell++;
+            stringLength = 1;
+            isDelim = 1;
+        }
+        for (unsigned i = 0; i < strlen(delim); i++)
+        {
+            if (delim[i] == character)
+            {
+                data->cell[currentCell][stringLength - 1] = '\0';
+                currentCell++;
+                stringLength = 1;
+                isDelim = 1;
+                break;
+            }
+            else
+            {
+                isDelim = 0;
+            }
+        }
+
+        if (!isDelim)
+        {
+            if (character != '\n')
+            {
+
+                data->cell[currentCell][stringLength - 1] = character;
+                stringLength++;
+                char *p = realloc(data->cell[currentCell], stringLength * sizeof(char));
+                if (p == NULL)
+                {
+                    printf("Realloc fail!");
+                    free(p);
+                    free(data->cell);
+                    return 0;
+                }
+                data->cell[currentCell] = p;
+            }
+        }
+    }
+    for (int i = 0; i < currentCell; i++)
+    {
+
+        printf("%s ", data->cell[i]);
+    }
+    /* //bude číst soubor
     //ptát se jestli znak není z delimu
     char character;
+    int pos = 0;
+    //alokace 1. buňky
+    data->cell = malloc(sizeof(char*));
+    char *reallocP;
     while ((character = fgetc(inputFile)) != EOF)
     {
         //počet sloupců
         for (int i = 0; i < strlen(delim); i++)
         {
             if (character == delim[i])
-            data->colCount++;
+            {
+                data->colCount++;
+                //zvětšení pole o jeden ukazatel na string
+                //data->cell = resizeArrayBy(data, 1);
+                //uložení do pole
+                
+                break;
+            }
         }
 
         //počet řádků
         if (character == '\n')
-            data->rowCount++;
-
-    }
-        if (data->colCount % data->rowCount == 0)
         {
-        data->colCount = data->colCount/data->rowCount+1;
+            data->rowCount++;
+        }
+        //načtu řádek, projdu řádek
+    }
+
+
+    if (data->colCount % data->rowCount == 0)
+    {
+        data->colCount = data->colCount / data->rowCount + 1;
         printf("Pocet sloupcu %d, pocet radku %d.\n", data->colCount, data->rowCount);
-        } else 
+        return 1;
+    }
+    else
+    {
         fprintf(stderr, "Pocet sloupcu je ruzny.");
-        
+        return 0;
+    } */
 }
 
 /* Destruktor pro 2D pole */
@@ -151,14 +280,18 @@ int main(int argc, char const *argv[])
             /* TODO: Rozdělení dat ze souboru do pole (tabulky) req */
             //printf("delim: %s\n", delim);
             arrayConstruct(&data);
-            fileToArray(&data, inputFile, delim);
+            if (fileToArray(&data, inputFile, delim))
+            {
+
+                /* TODO:  Rozšifrování CMD_SEQUENCE (příkazy oddělené ;) req */
+
+                /* TODO: free all všeho nad čím se provedl malloc nebo realloc*/
+            }
+            else
+                return 1;
 
             //uzavření souboru po načtení dat do pole
             closeFile(inputFile);
-
-            /* TODO:  Rozšifrování CMD_SEQUENCE (příkazy oddělené ;) req */
-
-            /* TODO: free all všeho nad čím se provedl malloc nebo realloc*/
         }
         else
             //pokud se soubor nepodaří otevřít
