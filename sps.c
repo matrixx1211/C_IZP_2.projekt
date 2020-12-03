@@ -14,7 +14,7 @@
 #define MAXARGS 5
 #define MINARGS 3
 #define DELIMPOS 1
-#define MINCELL 100
+#define MINCELL 10
 
 //Definice struktury
 typedef struct
@@ -143,7 +143,7 @@ void countRowsAndCols(array *table, FILE *inputFile, const char *delim)
         table->rowCount++; */
 
     //počet delimů + počet řádků = počet buněk
-    
+
     table->cellCount += table->rowCount;
     table->colCount = table->cellCount / table->rowCount;
     //DEBUG
@@ -201,6 +201,7 @@ void resizeColBy(array *table, int by)
 /* Změní velikost buňky o zadaný počet */
 int resizeCellBy(array *table, int by, int row, int col)
 {
+    //printf("realokace bunky: [%d, %d] na velikost: %d\n", row, col, by);
     char *cellPointer = realloc(table->cell[row][col], sizeof(char) * by);
     if (cellPointer == NULL)
     {
@@ -221,8 +222,19 @@ int fileToTable(array *table, FILE *inputFile, const char *delim)
     int currentRow = 0, currentCol = 0, charPos = 0;
     while ((character = fgetc(inputFile)) != EOF)
     {
+        if (character == '\n')
+        {
+            //VERY IMPORTANT THING RIGHT HERE 
+            table->cell[currentRow][currentCol][charPos] = '\0';
+            charPos = 0;
+            currentCol = 0;
+            currentRow++;
+        }
+
         if (strchr(delim, character) != NULL)
         {
+            //VERY IMPORTANT THING RIGHT HERE 
+            table->cell[currentRow][currentCol][charPos] = '\0';
             charPos = 0;
             currentCol++;
         }
@@ -233,15 +245,13 @@ int fileToTable(array *table, FILE *inputFile, const char *delim)
                 //printf("pozice: %d, znak: %c, velikost: %d\n", charPos, character, charPos + 1);
                 table->cell[currentRow][currentCol][charPos] = character;
                 charPos++;
+                if (charPos+1 > MINCELL)
+                    if (!resizeCellBy(table, charPos+1, currentRow, currentCol))
+                        return 0;
             }
         }
 
-        if (character == '\n')
-        {
-            charPos = 0;
-            currentCol = 0;
-            currentRow++;
-        }
+        
     }
     return 1;
 }
