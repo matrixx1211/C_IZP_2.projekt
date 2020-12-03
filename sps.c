@@ -2,8 +2,9 @@
 /*                            Marek Bitomský                                 */
 /*                                 2020                                      */
 /*                                                                           */
-/*                                                                           */
-/*     Cílem projektu je vytvořit tabulkový procesor na příkazové řádce.     */
+/*      Cílem projektu je vytvořit program, který bude implementovat         */
+/*                   základní operace tabulkových procesorů.                 */
+/*                 Program umí pracovat s daty v celé tabulce.               */
 
 //Hlavičkové soubory
 #include <stdio.h>
@@ -123,20 +124,35 @@ void countRowsAndCols(array *table, FILE *inputFile, const char *delim)
         if (character == '\n')
         {
             table->rowCount++;
+            table->colCount = 0;
         }
 
         if (strchr(delim, character) != NULL)
         {
+            //počet nalezených znaků delim
             table->cellCount++;
+            table->colCount++;
         }
     }
+    //DEBUG
+    //printf("col: %d, row: %d, cell: %d\n", table->colCount, table->rowCount, table->cellCount);
+
+    //windows nerad přidává konec řádku na konec posledního řádku
+    /* FIXME: dělení 0 */
+    /* if (table->colCount != 0)
+        table->rowCount++; */
+
+    //počet delimů + počet řádků = počet buněk
+    
     table->cellCount += table->rowCount;
     table->colCount = table->cellCount / table->rowCount;
+    //DEBUG
+    //printf("col: %d, row: %d, cell: %d\n", table->colCount, table->rowCount, table->cellCount);
     return;
 }
 
 /* Inicializace tabulky */
-void initTable(array *table, FILE *inputFile, const char *delim)
+void initTable(array *table, FILE *inputFile)
 {
     fseek(inputFile, 0, SEEK_SET);
     //alokace počtu řádků
@@ -159,6 +175,7 @@ void initTable(array *table, FILE *inputFile, const char *delim)
         }
         for (int j = 0; j < table->colCount; j++)
         {
+            //printf("i:%d, j:%d  - %d\n", i, j, table->colCount);
             //možná by stačilo za 1 dát colCount ověřit
             table->cell[i][j] = calloc(1, MINCELL);
             if (table->cell == NULL)
@@ -172,8 +189,31 @@ void initTable(array *table, FILE *inputFile, const char *delim)
     return;
 }
 
+/* Změní velikost řádku o zadaný počet
+void resizeRowBy(array *table, int by)
+{
+}
+Změní velikost sloupce o zadaný počet
+void resizeColBy(array *table, int by)
+{
+} */
+
+/* Změní velikost buňky o zadaný počet */
+int resizeCellBy(array *table, int by, int row, int col)
+{
+    char *cellPointer = realloc(table->cell[row][col], sizeof(char) * by);
+    if (cellPointer == NULL)
+    {
+        fprintf(stderr, "Chyba pri realokaci.");
+        free(cellPointer);
+        return 0;
+    }
+    table->cell[row][col] = cellPointer;
+    return 1;
+}
+
 /* Rozdělí data ze souboru do 2D pole */
-void fileToTable(array *table, FILE *inputFile, const char *delim)
+int fileToTable(array *table, FILE *inputFile, const char *delim)
 {
     /* FIXME: checkovat délku a případně zvětšovat  */
     fseek(inputFile, 0, SEEK_SET);
@@ -181,20 +221,16 @@ void fileToTable(array *table, FILE *inputFile, const char *delim)
     int currentRow = 0, currentCol = 0, charPos = 0;
     while ((character = fgetc(inputFile)) != EOF)
     {
-        //printf("%d, %d, %d: ", currentCol, currentRow, charPos);
-        //printf("%c\n", character);
-        //printf("%d, %d, %d\n", table->colCount, table->rowCount, table->cellCount);
         if (strchr(delim, character) != NULL)
         {
-            //je delim
             charPos = 0;
             currentCol++;
         }
         else
         {
-            //neni delim
             if (character != '\n')
             {
+                //printf("pozice: %d, znak: %c, velikost: %d\n", charPos, character, charPos + 1);
                 table->cell[currentRow][currentCol][charPos] = character;
                 charPos++;
             }
@@ -207,7 +243,7 @@ void fileToTable(array *table, FILE *inputFile, const char *delim)
             currentRow++;
         }
     }
-    return;
+    return 1;
 }
 
 /* Vypsání tabulky */
@@ -223,21 +259,6 @@ void printTable(array *table, char delim)
         printf("\n");
     }
     return;
-}
-
-/* Změní velikost řádku o zadaný počet */
-void resizeRowBy(array *table, int by)
-{
-}
-
-/* Změní velikost sloupce o zadaný počet */
-void resizeColBy(array *table, int by)
-{
-}
-
-/* Změní velikost buňky o zadaný počet */
-void resizeCellBy(array *table, int by)
-{
 }
 
 int main(int argc, const char *argv[])
@@ -257,18 +278,21 @@ int main(int argc, const char *argv[])
             //TODO: spočítat počet řádků a sloupců
             countRowsAndCols(&table, inputFile, delim);
             //TODO: vytvoření tabulky
-            initTable(&table, inputFile, delim);
+            initTable(&table, inputFile);
             //TODO: naplnění tabulky daty ze souboru
-            fileToTable(&table, inputFile, delim);
-            //TODO: vypsání dat
-            printTable(&table, delim[0]);
-            //TODO:  Rozšifrování CMD_SEQUENCE (příkazy oddělené ;) req
-            //TODO: free all všeho nad čím se provedl malloc nebo realloc
+            if (fileToTable(&table, inputFile, delim))
+            {
+
+                //TODO: vypsání dat
+                printTable(&table, delim[0]);
+                //TODO:  Rozšifrování CMD_SEQUENCE (příkazy oddělené ;) req
+                //TODO: free all všeho nad čím se provedl malloc nebo realloc
+            }
 
             //uzavření souboru po načtení dat do pole
             closeFile(inputFile);
 
-            //TODO: odstranění věcí v tabulce
+            //desktukce tabulky - uvolnění paměti
             tableDestruct(&table);
         }
         else

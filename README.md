@@ -22,9 +22,10 @@ Argument FILE specifikuje název souboru s tabulkou.
 - [x] **Uzavření souboru**
 - [x] **Kontrola zadaných argumentů**
 - [x] **Nalezení delimu**
-- [ ] **Rozdělit data ze souboru do buněk**
-- [ ] ** **
-- [ ] ** **
+- [x] **Rozdělit data ze souboru do buněk**
+- [ ] **Změna velikosti buňky**
+- [ ] **Změna velikosti řádku**
+- [ ] **Změna velikosti sloupce**
 
 ### Příkazy pro změnu výběru
 Výběr buněk může přesahovat hranice vstupní tabulky. V takovém případě bude tabulka rozšířena o požadovaný počet řádků a sloupců obsahující prázdné buňky až do aktuálního výběru.
@@ -64,12 +65,3 @@ Tabulkový procesor umožnujě pracovat s 10 tzv. dočasnými proměnnými ident
 - [ ] **inc _X** - numerická hodnota v dočasné proměnné bude zvětšena o 1. Pokud dočasná proměnná neobsahuje číslo, bude výsledná hodnota proměnné nastavená na 1.
 - [ ] **[set]** - nastaví aktuální výběr buněk do dočasné proměnné _ (ukládá se pouze, které buňky jsou vybrány, nikoliv jejich obsah)
 
-
-
-
-
-
-HELP ME:
-cell[x][y]
-naalokovat počet řádků (p. řádků x char *)
-naalokovat počet sloupců (p. sloupců x char *) 
