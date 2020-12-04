@@ -26,6 +26,7 @@ Argument FILE specifikuje název souboru s tabulkou.
 - [ ] **Změna velikosti buňky**
 - [ ] **Změna velikosti řádku**
 - [ ] **Změna velikosti sloupce**
+- [ ] **Kontrola počtu řádků a sloupců**
 
 ### Příkazy pro změnu výběru
 Výběr buněk může přesahovat hranice vstupní tabulky. V takovém případě bude tabulka rozšířena o požadovaný počet řádků a sloupců obsahující prázdné buňky až do aktuálního výběru.

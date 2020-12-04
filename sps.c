@@ -44,9 +44,127 @@ void cmdDestruct(cmdArray *cmds)
 {
     for (int i = 0; i < cmds->cmdCount; i++)
     {
-        free(cmds->cell[i]);
+        if (cmds->cell[i] != NULL)
+            free(cmds->cell[i]);
     }
-    free(cmds->cell);
+    if (cmds->cell != NULL)
+        free(cmds->cell);
+    return;
+}
+
+/* Alokace pole příkazů */
+void initArray(cmdArray *cmds)
+{
+    //alokace řádků
+    //printf("%d", cmds->cmdCount);
+    cmds->cell = malloc(sizeof(char *) * cmds->cmdCount);
+    if (cmds->cell == NULL)
+    {
+        fprintf(stderr, "Chyba pri alokaci pameti.");
+        cmdDestruct(cmds);
+        return;
+    }
+
+    //alokace buněk na velikost MINCELL
+    for (int i = 0; i < cmds->cmdCount; i++)
+    {
+        cmds->cell[i] = calloc(1, sizeof(char) * MINCELL);
+        if (cmds->cell[i] == NULL)
+        {
+            fprintf(stderr, "Chyba pri alokaci pameti.");
+            cmdDestruct(cmds);
+            return;
+        }
+    }
+    return;
+}
+
+/* Zvětšení buňky pro příkaz */
+void resizeArray(cmdArray *cmds, int row, int newSize)
+{
+    char *cellPointer;
+    cellPointer = realloc(cmds->cell[row], sizeof(char) * newSize);
+    if (cellPointer == NULL)
+    {
+        fprintf(stderr, "Chyba pri realokaci pameti.");
+        free(cellPointer);
+        return;
+    }
+    cmds->cell[row] = cellPointer;
+    return;
+}
+
+/* Zjistí počet příkazů */
+void countCommands(cmdArray *cmds, const char *argValue[], int seqPos)
+{
+    //vypočítání počtu příkazů
+    for (unsigned int i = 0; i <= strlen(argValue[seqPos]); i++)
+        if (argValue[seqPos][i] == ';' || argValue[seqPos][i] == '\0')
+            cmds->cmdCount++;
+    return;
+}
+
+/* Rozdělí příkazy do buněk v poli */
+void commandsToArray(cmdArray *cmds, const char *argValue[], int seqPos)
+{
+    int j = 0, character = 0;
+
+    for (int i = 0; i < cmds->cmdCount; i++)
+    {
+        while (argValue[seqPos][j] != '\0')
+        {
+            if (argValue[seqPos][j] != ';')
+            {
+                cmds->cell[i][character] = argValue[seqPos][j];
+                character++;
+                j++;
+                if (j >= MINCELL)
+                    resizeArray(cmds, i, character + 1);
+            }
+            else
+            {
+                cmds->cell[i][character] = '\0';
+                j++;
+                i++;
+                character = 0;
+            }
+        }
+        if (argValue[seqPos][j] == '\0')
+            cmds->cell[i][character] = '\0';
+    }
+}
+
+/* Výpis příkazů */
+void printCommands(cmdArray *cmds)
+{
+    for (int i = 0; i < cmds->cmdCount; i++)
+    {
+        printf("%d. %s\n", i, cmds->cell[i]);
+    }
+}
+
+/* Rozšifrování CMD_sequence */
+void findCommands(cmdArray *cmds, int argCount, const char *argValue[])
+{
+    //Podle argumentů nastaví pozici CMD_Sequence
+    int seqPos;
+    if (argCount == 3)
+        seqPos = 1;
+    else
+        seqPos = 3;
+
+    cmdConstruct(cmds);
+
+    countCommands(cmds, argValue, seqPos);
+    //printf("cmdCount: %d\n", cmds->cmdCount);
+
+    initArray(cmds);
+
+    commandsToArray(cmds, argValue, seqPos);
+
+    //printCommands(cmds);
+
+    cmdDestruct(cmds);
 }
 
 int openFile(int lastArg, char const *fileName[], FILE **inputFile)
@@ -131,11 +249,14 @@ void tableDestruct(array *table)
     {
         for (int j = 0; j < table->colCount; j++)
         {
-            free(table->cell[i][j]);
+            if (table->cell[i][j] != NULL)
+                free(table->cell[i][j]);
         }
-        free(table->cell[i]);
+        if (table->cell[i] != NULL)
+            free(table->cell[i]);
     }
-    free(table->cell);
+    if (table->cell != NULL)
+        free(table->cell);
     return;
 }
 
@@ -338,6 +459,12 @@ int resizeCellOn(array *table, int newSize, int row, int col)
 /* Rozdělí data ze souboru do 2D pole */
 int fileToTable(array *table, FILE *inputFile, const char *delim)
 {
+
+    tableConstruct(table);
+    //TODO: spočítat počet řádků a sloupců
+    countRowsAndCols(table, inputFile, delim);
+    //TODO: vytvoření tabulky
+    initTable(table, inputFile);
     /* FIXME: checkovat délku a případně zvětšovat  */
     fseek(inputFile, 0, SEEK_SET);
     char character;
@@ -378,42 +505,6 @@ int fileToTable(array *table, FILE *inputFile, const char *delim)
     return 1;
 }
 
-/* Rozšifrování CMD_sequence */
-void findCommands(cmdArray *cmds, int argCount, const char *argValue[])
-{
-    //Podle argumentů nastaví pozici CMD_Sequence
-    int seqPos;
-    if (argCount == 3)
-        seqPos = 1;
-    else
-        seqPos = 3;
-    //const char *token = ";";
-    //vypočítání počtu příkazů
-    for (unsigned int i = 0; i <= strlen(argValue[seqPos]); i++)
-        if (argValue[seqPos][i] == ';' || argValue[seqPos][i] == '\0')
-            cmds->cmdCount++;
-
-    printf("cmdCount: %d\n", cmds->cmdCount);
-
-    /* cmds->cell = malloc(sizeof(char *) * cmds->cmdCount);
-    if (cmds->cell = NULL)
-    {
-        fprintf(stderr, "Chyba pri alokaci pameti.");
-        return;
-    }
-    for (int i = 0; i < cmds->cmdCount; i++)
-    {
-        command = strtok(sequence, token);
-        cmds->cell[i] = malloc(sizeof(char) * );
-        while (command != NULL)
-        {
-            printf("Sekvence prikazu: %s\n", command);
-
-            cmds->cell[i] = strtok(NULL, token);
-        }
-    } */
-}
-
 /* Vypsání tabulky */
 void printTable(array *table, char delim)
 {
@@ -442,27 +533,14 @@ int main(int argc, const char *argv[])
             array table;
             const char *delim = findDelim(argc, argv);
 
-            tableConstruct(&table);
-            //TODO: spočítat počet řádků a sloupců
-            countRowsAndCols(&table, inputFile, delim);
-            //TODO: vytvoření tabulky
-            initTable(&table, inputFile);
             //TODO: naplnění tabulky daty ze souboru
             if (fileToTable(&table, inputFile, delim))
             {
                 cmdArray cmds;
-                cmdConstruct(&cmds);
+
                 resizeRowBy(&table, 10);
-                /* //test zatím workuje
-                resizeCellBy(&table, 10, table.rowCount - 1, table.colCount - 1);
-                sprintf(table.cell[table.rowCount - 1][table.colCount - 1], "%d, %d last", table.rowCount - 1, table.colCount - 1); */
-                //printf("%d\n", strlen("xxx"));
-                //resizeCellBy(&table, 10, table.rowCount - 1, table.colCount - 1);
-                //table.cell[table.rowCount - 1][table.colCount - 1] = "0123456789";
-                //resizeColBy(&table, 2);
                 //TODO:  Rozšifrování CMD_SEQUENCE (příkazy oddělené ;) req
                 findCommands(&cmds, argc, argv);
-                //cmdDestruct(&cmds);
                 //TODO: vypsání dat
                 printTable(&table, delim[0]);
             }
@@ -472,7 +550,6 @@ int main(int argc, const char *argv[])
             closeFile(inputFile);
 
             //desktukce tabulky - uvolnění paměti
-
             tableDestruct(&table);
         }
         else
