@@ -16,7 +16,7 @@
 #define DELIMPOS 1
 #define MINCELL 1
 
-//Definice struktury
+//Definice struktur
 typedef struct
 {
     int rowCount;
@@ -24,6 +24,30 @@ typedef struct
     int cellCount;
     char ***cell;
 } array;
+
+typedef struct
+{
+    int cmdCount;
+    char **cell;
+} cmdArray;
+
+/* Konstruktor pro pole příkazů */
+void cmdConstruct(cmdArray *cmds)
+{
+    cmds->cell = NULL;
+    cmds->cmdCount = 0;
+    return;
+}
+
+/* Destrukce pole příkazů - uvolnění paměti */
+void cmdDestruct(cmdArray *cmds)
+{
+    for (int i = 0; i < cmds->cmdCount; i++)
+    {
+        free(cmds->cell[i]);
+    }
+    free(cmds->cell);
+}
 
 int openFile(int lastArg, char const *fileName[], FILE **inputFile)
 {
@@ -240,16 +264,52 @@ void resizeRowBy(array *table, int by)
 }
 
 /* Změní velikost sloupce o zadaný počet */
-/* void resizeColBy(array *table, int by)
+void resizeColBy(array *table, int by)
 {
-    //char *colPointer = ;
-} */
+    char **colPointer;
+    char *cellPointer;
+    table->colCount += by;
+    //5 (4) + 2 = 7 (6)
+    //realokace sloupců
+    for (int i = 0; i < (table->rowCount); i++)
+    {
+        colPointer = realloc(table->cell[i], table->colCount * sizeof(char *));
+        if (colPointer == NULL)
+        {
+            fprintf(stderr, "Alokace se nepovedla.");
+            tableDestruct(table);
+            return;
+        }
+        else
+            table->cell[i] = colPointer;
 
+        //alokace bunek od poslední neinicializované až po poslední
+        for (int j = table->colCount - by; j < table->colCount; j++)
+        {
+            //calloc vycisti alokovany prostor
+            cellPointer = calloc(1, MINCELL);
+            if (cellPointer == NULL)
+            {
+                fprintf(stderr, "Realokace se nepovedla.");
+                tableDestruct(table);
+                return;
+            }
+            else
+                table->cell[i][j] = cellPointer;
+        }
+    }
+}
+
+/* FIXME: nevím jestli chci používat */
 /* Změní velikost buňky o zadaný počet */
-/* int resizeCellBy(array *table, int by, int row, int col)
+int resizeCellBy(array *table, int by, int row, int col)
 {
     char *cellPointer;
-    cellPointer = realloc(table->cell[row][col], sizeof(char) * (strlen(table->cell[row][col]) + by));
+    int newSize = strlen(table->cell[row][col]) + 1 + by;
+    /* FIXME: otestovat s * */
+    if (table->colCount == col + 1 && table->rowCount == row + 1)
+        printf("%d", newSize);
+    cellPointer = realloc(table->cell[row][col], sizeof(char) * (by + strlen(table->cell[row][col])));
     if (cellPointer == NULL)
     {
         fprintf(stderr, "Chyba pri realokaci.");
@@ -258,13 +318,13 @@ void resizeRowBy(array *table, int by)
     }
     table->cell[row][col] = cellPointer;
     return 1;
-} */
+}
 
 /* Změní velikost buňky na zadaný počet */
 int resizeCellOn(array *table, int newSize, int row, int col)
 {
     char *cellPointer;
-    cellPointer = realloc(table->cell[row][col], sizeof(char) * newSize/* (strlen(table->cell[row][col]) + by) */);
+    cellPointer = realloc(table->cell[row][col], sizeof(char) * newSize /* (strlen(table->cell[row][col]) + by) */);
     if (cellPointer == NULL)
     {
         fprintf(stderr, "Chyba pri realokaci.");
@@ -281,7 +341,8 @@ int fileToTable(array *table, FILE *inputFile, const char *delim)
     /* FIXME: checkovat délku a případně zvětšovat  */
     fseek(inputFile, 0, SEEK_SET);
     char character;
-    int currentRow = 0, currentCol = 0, charPos = 0;
+    int currentRow = 0, currentCol = 0;
+    unsigned int charPos = 0;
     while ((character = fgetc(inputFile)) != EOF)
     {
         if (character == '\n')
@@ -305,7 +366,9 @@ int fileToTable(array *table, FILE *inputFile, const char *delim)
             if (character != '\n')
             {
                 table->cell[currentRow][currentCol][charPos] = character;
+                //0
                 charPos++;
+                //1
                 if (charPos >= MINCELL)
                     if (!resizeCellOn(table, charPos + 1, currentRow, currentCol))
                         return 0;
@@ -313,6 +376,42 @@ int fileToTable(array *table, FILE *inputFile, const char *delim)
         }
     }
     return 1;
+}
+
+/* Rozšifrování CMD_sequence */
+void findCommands(cmdArray *cmds, int argCount, const char *argValue[])
+{
+    //Podle argumentů nastaví pozici CMD_Sequence
+    int seqPos;
+    if (argCount == 3)
+        seqPos = 1;
+    else
+        seqPos = 3;
+    //const char *token = ";";
+    //vypočítání počtu příkazů
+    for (unsigned int i = 0; i <= strlen(argValue[seqPos]); i++)
+        if (argValue[seqPos][i] == ';' || argValue[seqPos][i] == '\0')
+            cmds->cmdCount++;
+
+    printf("cmdCount: %d\n", cmds->cmdCount);
+
+    /* cmds->cell = malloc(sizeof(char *) * cmds->cmdCount);
+    if (cmds->cell = NULL)
+    {
+        fprintf(stderr, "Chyba pri alokaci pameti.");
+        return;
+    }
+    for (int i = 0; i < cmds->cmdCount; i++)
+    {
+        command = strtok(sequence, token);
+        cmds->cell[i] = malloc(sizeof(char) * );
+        while (command != NULL)
+        {
+            printf("Sekvence prikazu: %s\n", command);
+
+            cmds->cell[i] = strtok(NULL, token);
+        }
+    } */
 }
 
 /* Vypsání tabulky */
@@ -351,24 +450,29 @@ int main(int argc, const char *argv[])
             //TODO: naplnění tabulky daty ze souboru
             if (fileToTable(&table, inputFile, delim))
             {
-                /* //test
+                cmdArray cmds;
+                cmdConstruct(&cmds);
                 resizeRowBy(&table, 10);
+                /* //test zatím workuje
                 resizeCellBy(&table, 10, table.rowCount - 1, table.colCount - 1);
                 sprintf(table.cell[table.rowCount - 1][table.colCount - 1], "%d, %d last", table.rowCount - 1, table.colCount - 1); */
                 //printf("%d\n", strlen("xxx"));
                 //resizeCellBy(&table, 10, table.rowCount - 1, table.colCount - 1);
                 //table.cell[table.rowCount - 1][table.colCount - 1] = "0123456789";
-
+                //resizeColBy(&table, 2);
+                //TODO:  Rozšifrování CMD_SEQUENCE (příkazy oddělené ;) req
+                findCommands(&cmds, argc, argv);
+                //cmdDestruct(&cmds);
                 //TODO: vypsání dat
                 printTable(&table, delim[0]);
-                //TODO:  Rozšifrování CMD_SEQUENCE (příkazy oddělené ;) req
-                //TODO: free all všeho nad čím se provedl malloc nebo realloc
             }
 
+            //TODO: free all všeho nad čím se provedl malloc nebo realloc
             //uzavření souboru po načtení dat do pole
             closeFile(inputFile);
 
             //desktukce tabulky - uvolnění paměti
+
             tableDestruct(&table);
         }
         else
