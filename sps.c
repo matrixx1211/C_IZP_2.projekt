@@ -14,7 +14,7 @@
 #define MAXARGS 5
 #define MINARGS 3
 #define DELIMPOS 1
-#define MINCELL 10
+#define MINCELL 1
 
 //Definice struktury
 typedef struct
@@ -52,7 +52,7 @@ void closeFile(FILE *inputFile)
 }
 
 /* Kontroluje, zda argumenty byli zadány správně */
-int checkArgs(int argCount, char const *argValue[])
+int checkArgs(int argCount, const char *argValue[])
 {
     /* Pokud ukazatel na .txt není NULL a zároveň byl zadán DELIM, tak musí být počet argumentů 5 nebo počet argumentů musí být 3  */
     if ((strstr(argValue[argCount - 1], ".txt") != NULL) && ((!strcmp("-d", argValue[DELIMPOS]) && argCount == MAXARGS) || argCount == MINARGS))
@@ -189,24 +189,77 @@ void initTable(array *table, FILE *inputFile)
     return;
 }
 
-/* Změní velikost řádku o zadaný počet
+/* Změní velikost řádku o zadaný počet */
 void resizeRowBy(array *table, int by)
 {
+    char ***rowPointer;
+    char **colPointer;
+    char *cellPointer;
+    table->rowCount += by;
+    //realokace ukazatelu radku
+    //printf("rows: %d\n", table->rowCount);
+    //printf("cols: %d\n", table->colCount);
+    rowPointer = realloc(table->cell, sizeof(char *) * table->rowCount);
+    if (rowPointer == NULL)
+    {
+        fprintf(stderr, "Realokace se nepovedla.");
+        tableDestruct(table);
+        return;
+    }
+    else
+        table->cell = rowPointer;
+
+    //alokace ukazatelu sloupcu na nových řádcích
+    for (int i = (table->rowCount - by); i < (table->rowCount); i++)
+    {
+        colPointer = malloc(sizeof(char *) * table->colCount);
+        if (colPointer == NULL)
+        {
+            fprintf(stderr, "Alokace se nepovedla.");
+            tableDestruct(table);
+            return;
+        }
+        else
+            table->cell[i] = colPointer;
+
+        //alokace bunek
+        for (int j = 0; j < table->colCount; j++)
+        {
+            //calloc vycisti alokovany prostor
+            cellPointer = calloc(1, MINCELL);
+            if (cellPointer == NULL)
+            {
+                fprintf(stderr, "Realokace se nepovedla.");
+                tableDestruct(table);
+                return;
+            }
+            else
+                table->cell[i][j] = cellPointer;
+        }
+    }
 }
-Změní velikost sloupce o zadaný počet
-void resizeColBy(array *table, int by)
+
+/* Změní velikost sloupce o zadaný počet */
+/* void resizeColBy(array *table, int by)
 {
+    //char *colPointer = ;
 } */
 
 /* Změní velikost buňky o zadaný počet */
 int resizeCellBy(array *table, int by, int row, int col)
 {
     //printf("realokace bunky: [%d, %d] na velikost: %d\n", row, col, by);
-    char *cellPointer = realloc(table->cell[row][col], sizeof(char) * by);
+    //printf("%d: \"%s\" <-", strlen(table->cell[row][col]) + by, table->cell[row][col]);
+    //printf("%ld <-", strlen(table->cell[row][col]) + by);
+    //strlen vrátí hodnotu bez \0 takže pro text "ahoj", který potřebuje velikost 5 strlen vrací 4
+    //1 * ((4 + 1) + 1) = 1 * (5 + 1) = 6
+    //z toho plyne že je potřeba volat, když je velikost buňky x velká 2 + 1 + 1
+    char *cellPointer = realloc(table->cell[row][col], sizeof(char) * (strlen(table->cell[row][col]) + by));
     if (cellPointer == NULL)
     {
         fprintf(stderr, "Chyba pri realokaci.");
         free(cellPointer);
+        tableDestruct(table);
         return 0;
     }
     table->cell[row][col] = cellPointer;
@@ -224,8 +277,10 @@ int fileToTable(array *table, FILE *inputFile, const char *delim)
     {
         if (character == '\n')
         {
-            //VERY IMPORTANT THING RIGHT HERE 
+            //VERY IMPORTANT THING RIGHT HERE
             table->cell[currentRow][currentCol][charPos] = '\0';
+            //printf("\n%s\n", table->cell[currentRow][currentCol]);
+
             charPos = 0;
             currentCol = 0;
             currentRow++;
@@ -233,7 +288,7 @@ int fileToTable(array *table, FILE *inputFile, const char *delim)
 
         if (strchr(delim, character) != NULL)
         {
-            //VERY IMPORTANT THING RIGHT HERE 
+            //VERY IMPORTANT THING RIGHT HERE
             table->cell[currentRow][currentCol][charPos] = '\0';
             charPos = 0;
             currentCol++;
@@ -243,15 +298,18 @@ int fileToTable(array *table, FILE *inputFile, const char *delim)
             if (character != '\n')
             {
                 //printf("pozice: %d, znak: %c, velikost: %d\n", charPos, character, charPos + 1);
+
+                //na začátku velikost buňky je 1 uložím tam znak (charPos = 0)
                 table->cell[currentRow][currentCol][charPos] = character;
+                //přičtu pozici pro další znak (charPos = 1)
                 charPos++;
-                if (charPos+1 > MINCELL)
-                    if (!resizeCellBy(table, charPos+1, currentRow, currentCol))
+                if (charPos >= MINCELL)
+                    //zavolá se resize by
+                    if (!resizeCellBy(table, 1, currentRow, currentCol))
                         return 0;
+                //pokud je velikost buňky (charPos = 1) + 1 => 2 > 1
             }
         }
-
-        
     }
     return 1;
 }
@@ -292,7 +350,11 @@ int main(int argc, const char *argv[])
             //TODO: naplnění tabulky daty ze souboru
             if (fileToTable(&table, inputFile, delim))
             {
-
+                /* //test
+                resizeRowBy(&table, 10);
+                resizeCellBy(&table, 10, table.rowCount - 1, table.colCount - 1);
+                sprintf(table.cell[table.rowCount - 1][table.colCount - 1], "%d, %d last", table.rowCount - 1, table.colCount - 1); */
+                //printf("%d\n", strlen("xxx"));
                 //TODO: vypsání dat
                 printTable(&table, delim[0]);
                 //TODO:  Rozšifrování CMD_SEQUENCE (příkazy oddělené ;) req
