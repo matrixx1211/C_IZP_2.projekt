@@ -26,37 +26,36 @@ Argument FILE specifikuje název souboru s tabulkou.
 - [x] **Změna velikosti buňky**
 - [x] **Změna velikosti řádku**
 - [x] **Změna velikosti sloupce**
-- [ ] **Kontrola počtu řádků a sloupců**
 
 ### Příkazy pro změnu výběru
 Výběr buněk může přesahovat hranice vstupní tabulky. V takovém případě bude tabulka rozšířena o požadovaný počet řádků a sloupců obsahující prázdné buňky až do aktuálního výběru.
 
-- [ ] **[R,C]** - výběr buňky na řádku R a sloupci C.
-- [ ] **[R,_]** - výběr celého řádku R.
-- [ ] **[_,C]** - výběr celého sloupce C.
-- [ ] **[R1,C1,R2,C2]** - výběr okna, tj. všech buněk na řádku R a sloupci C, pro které platí R1 <= R <= R2, C1 <= C <= C2. Pokud namísto čísla R2 resp. C2 bude pomlčka, nahrazuje tak maximální řádek resp. sloupec v tabulce.
-- [ ] **[_,_]** - výběr celé tabulky.
+- [x] **[R,C]** - výběr buňky na řádku R a sloupci C.
+- [x] **[R,_]** - výběr celého řádku R.
+- [x] **[_,C]** - výběr celého sloupce C.
+- [x] **[R1,C1,R2,C2]** - výběr okna, tj. všech buněk na řádku R a sloupci C, pro které platí R1 <= R <= R2, C1 <= C <= C2. Pokud namísto čísla R2 resp. C2 bude pomlčka, nahrazuje tak maximální řádek resp. sloupec v tabulce.
+- [x] **[_,_]** - výběr celé tabulky.
 - [ ] **[min]** - v již existujícím výběru buněk najde buňku s minimální numerickou hodnotou a výběr nastaví na ni.
 - [ ] **[max]** - obdobně jako předchozí příkaz, ale najde buňku s maximální hodnotou.
 - [ ] **[find STR]** - v již existujícím výběru buněk vybere první buňku, jejíž hodnota obsahuje podřetězec STR.
 - [ ] **[_]** - obnoví výběr z dočasné proměnné (viz níže).
 
 ### Příkazy pro úpravu struktury tabulky
-- [ ] **irow** - vloží jeden prázdný řádek nalevo od vybraných buněk.
-- [ ] **arow** - přidá jeden prázdný řádek napravo od vybraných buněk.
-- [ ] **drow** - odstraní vybrané řádky.
-- [ ] **icol** - vloží jeden prázdný sloupec nalevo od vybraných buněk.
-- [ ] **acol** - přidá jeden prázdný sloupec napravo od vybraných buněk.
-- [ ] **dcol** - odstraní vybrané sloupce.
+- [x] **irow** - vloží jeden prázdný řádek nalevo od vybraných buněk.
+- [x] **arow** - přidá jeden prázdný řádek napravo od vybraných buněk.
+- [x] **drow** - odstraní vybrané řádky.
+- [x] **icol** - vloží jeden prázdný sloupec nalevo od vybraných buněk.
+- [x] **acol** - přidá jeden prázdný sloupec napravo od vybraných buněk.
+- [x] **dcol** - odstraní vybrané sloupce.
 
 ### Příkazy pro úpravu obsahu buněk
-- [ ] **set STR** - nastaví hodnotu buňky na řetězec STR. Řetězec STR může být ohraničen uvozovkami a může obsahovat speciální znaky uvozené lomítkem (viz formát tabulky)
-- [ ] **clear** - obsah vybraných buněk bude odstraněn (buňky budou mít prázdný obsah)
-- [ ] **swap [R,C]** - vymění obsah vybrané buňky s buňkou na řádku R a sloupci C
-- [ ] **sum [R,C]** - do buňky na řádku R a sloupci C uloží součet hodnot vybraných buněk (odpovídající formátu %g u printf). Vybrané buňky neobsahující číslo budou ignorovány (jako by vybrány nebyly).
-- [ ] **avg [R,C]** - stejné jako sum, ale ukládá se aritmetický průměr z vybraných buněk
-- [ ] **count [R,C]** - stejné jako sum, ale ukládá se počet neprázdných buněk z vybraných buněk
-- [ ] **len [R,C]** - do buňky na řádku R a sloupci C uloží délku řetězce aktuálně vybrané buňky
+- [x] **set STR** - nastaví hodnotu buňky na řetězec STR. Řetězec STR může být ohraničen uvozovkami a může obsahovat speciální znaky uvozené lomítkem (viz formát tabulky)
+- [x] **clear** - obsah vybraných buněk bude odstraněn (buňky budou mít prázdný obsah)
+- [x] **swap [R,C]** - vymění obsah vybrané buňky s buňkou na řádku R a sloupci C
+- [x] **sum [R,C]** - do buňky na řádku R a sloupci C uloží součet hodnot vybraných buněk (odpovídající formátu %g u printf). Vybrané buňky neobsahující číslo budou ignorovány (jako by vybrány nebyly).
+- [x] **avg [R,C]** - stejné jako sum, ale ukládá se aritmetický průměr z vybraných buněk
+- [x] **count [R,C]** - stejné jako sum, ale ukládá se počet neprázdných buněk z vybraných buněk
+- [x] **len [R,C]** - do buňky na řádku R a sloupci C uloží délku řetězce aktuálně vybrané buňky
 
 ### Příkazy pro práci s dočasnými proměnnými
 Tabulkový procesor umožnujě pracovat s 10 tzv. dočasnými proměnnými identifikovanými jako _0 až _9. Dočasné proměnné mají po spuštění programu prázdnou hodnotu. Jedna dočasná proměnná identikovaná jako podtržítko _ je určena pro výběr buněk (tj. pamatuje si, které buňky byly označeny).
