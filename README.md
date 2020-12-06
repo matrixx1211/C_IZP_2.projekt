@@ -23,9 +23,9 @@ Argument FILE specifikuje název souboru s tabulkou.
 - [x] **Kontrola zadaných argumentů**
 - [x] **Nalezení delimu**
 - [x] **Rozdělit data ze souboru do buněk**
-- [ ] **Změna velikosti buňky**
-- [ ] **Změna velikosti řádku**
-- [ ] **Změna velikosti sloupce**
+- [x] **Změna velikosti buňky**
+- [x] **Změna velikosti řádku**
+- [x] **Změna velikosti sloupce**
 - [ ] **Kontrola počtu řádků a sloupců**
 
 ### Příkazy pro změnu výběru

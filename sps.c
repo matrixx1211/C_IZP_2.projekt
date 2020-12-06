@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #define MAXARGS 5
 #define MINARGS 3
@@ -31,6 +32,31 @@ typedef struct
     char **cell;
 } cmdArray;
 
+typedef struct
+{
+    int selRow1, selCol1, selRow2, selCol2;
+    char *_0, *_1, *_2, *_3, *_4, *_5, *_6, *_7, *_8, *_9;
+} selection;
+
+/* Konstruktor pro výběr */
+void selectionConstruct(selection *selected)
+{
+    selected->selRow1 = 0;
+    selected->selCol1 = 0;
+    selected->selRow2 = 0;
+    selected->selCol2 = 0;
+    selected->_0 = NULL;
+    selected->_1 = NULL;
+    selected->_2 = NULL;
+    selected->_3 = NULL;
+    selected->_4 = NULL;
+    selected->_5 = NULL;
+    selected->_6 = NULL;
+    selected->_7 = NULL;
+    selected->_8 = NULL;
+    selected->_9 = NULL;
+}
+
 /* Konstruktor pro pole příkazů */
 void cmdConstruct(cmdArray *cmds)
 {
@@ -49,6 +75,35 @@ void cmdDestruct(cmdArray *cmds)
     }
     if (cmds->cell != NULL)
         free(cmds->cell);
+    return;
+}
+
+/* Konstruktor pro 2D pole */
+void tableConstruct(array *table)
+{
+    /* TODO: inicializace 2D pole */
+    table->cell = NULL;
+    table->rowCount = 0;
+    table->colCount = 0;
+    table->cellCount = 0;
+    return;
+}
+
+/* Destruktor pro 2D pole */
+void tableDestruct(array *table)
+{
+    for (int i = 0; i < table->rowCount; i++)
+    {
+        for (int j = 0; j < table->colCount; j++)
+        {
+            if (table->cell[i][j] != NULL)
+                free(table->cell[i][j]);
+        }
+        if (table->cell[i] != NULL)
+            free(table->cell[i]);
+    }
+    if (table->cell != NULL)
+        free(table->cell);
     return;
 }
 
@@ -105,8 +160,18 @@ void countCommands(cmdArray *cmds, const char *argValue[], int seqPos)
 }
 
 /* Rozdělí příkazy do buněk v poli */
-void commandsToArray(cmdArray *cmds, const char *argValue[], int seqPos)
+void commandsToArray(cmdArray *cmds, int argCount, const char *argValue[])
 {
+    //Podle argumentů nastaví pozici CMD_Sequence
+    int seqPos = argCount - 2;
+
+    cmdConstruct(cmds);
+
+    countCommands(cmds, argValue, seqPos);
+    //printf("cmdCount: %d\n", cmds->cmdCount);
+
+    initArray(cmds);
+
     int j = 0, character = 0;
 
     for (int i = 0; i < cmds->cmdCount; i++)
@@ -143,197 +208,6 @@ void printCommands(cmdArray *cmds)
     }
 }
 
-/* Rozšifrování CMD_sequence */
-void findCommands(cmdArray *cmds, int argCount, const char *argValue[])
-{
-    //Podle argumentů nastaví pozici CMD_Sequence
-    int seqPos;
-    if (argCount == 3)
-        seqPos = 1;
-    else
-        seqPos = 3;
-
-    cmdConstruct(cmds);
-
-    countCommands(cmds, argValue, seqPos);
-    //printf("cmdCount: %d\n", cmds->cmdCount);
-
-    initArray(cmds);
-
-    commandsToArray(cmds, argValue, seqPos);
-
-    //printCommands(cmds);
-
-    cmdDestruct(cmds);
-}
-
-int openFile(int lastArg, char const *fileName[], FILE **inputFile)
-{
-
-    *inputFile = fopen(fileName[lastArg - 1], "r");
-    if (*inputFile == NULL)
-    {
-        fprintf(stderr, "Chyba pri otevirani souboru.\n");
-        return 0;
-    }
-    else
-    {
-        ////debug
-        //printf("Otevrel se soubor: %s.\n", fileName[lastArg - 1]);
-        return 1;
-    }
-}
-
-/* Uzavře soubor */
-void closeFile(FILE *inputFile)
-{
-    ////debug
-    //printf("Soubor uzavren.\n");
-    fclose(inputFile);
-    return;
-}
-
-/* Kontroluje, zda argumenty byli zadány správně */
-int checkArgs(int argCount, const char *argValue[])
-{
-    /* Pokud ukazatel na .txt není NULL a zároveň byl zadán DELIM, tak musí být počet argumentů 5 nebo počet argumentů musí být 3  */
-    if ((strstr(argValue[argCount - 1], ".txt") != NULL) && ((!strcmp("-d", argValue[DELIMPOS]) && argCount == MAXARGS) || argCount == MINARGS))
-    {
-        return 1;
-    }
-    else
-    {
-        fprintf(stderr, "Program spusten spatne.\n"
-                        "Je potreba zadat [-d DELIM] CMD_SEQUENCE FILE.\n"
-                        "------------------------------------------------------------\n"
-                        "Parametr [-d DELIM] je volitelny.\n"
-                        "------------------------------------------------------------\n"
-                        "Parametr CMD_SEQUENCE je povinny.\n"
-                        "------------------------------------------------------------\n"
-                        "Parametr FILE je take povinny, zadejte ve formatu nazev.txt.\n"
-                        "------------------------------------------------------------\n");
-        return 0;
-    }
-}
-
-/* Nastavení delimu */
-char const *findDelim(int argCount, const char *argValue[])
-{
-    if (!strcmp(argValue[DELIMPOS], "-d") && (argCount == MAXARGS))
-    {
-        char const *delim = argValue[DELIMPOS + 1];
-        return delim;
-    }
-    else
-    {
-        char *delim = " ";
-        return delim;
-    }
-}
-
-/* Konstruktor pro 2D pole */
-void tableConstruct(array *table)
-{
-    /* TODO: inicializace 2D pole */
-    table->cell = NULL;
-    table->rowCount = 0;
-    table->colCount = 0;
-    table->cellCount = 0;
-    return;
-}
-
-/* Destruktor pro 2D pole */
-void tableDestruct(array *table)
-{
-    for (int i = 0; i < table->rowCount; i++)
-    {
-        for (int j = 0; j < table->colCount; j++)
-        {
-            if (table->cell[i][j] != NULL)
-                free(table->cell[i][j]);
-        }
-        if (table->cell[i] != NULL)
-            free(table->cell[i]);
-    }
-    if (table->cell != NULL)
-        free(table->cell);
-    return;
-}
-
-/* Spočítá počet řádků a počet sloupců */
-void countRowsAndCols(array *table, FILE *inputFile, const char *delim)
-{
-    char character;
-    while ((character = fgetc(inputFile)) != EOF)
-    {
-        if (character == '\n')
-        {
-            table->rowCount++;
-            table->colCount = 0;
-        }
-
-        if (strchr(delim, character) != NULL)
-        {
-            //počet nalezených znaků delim
-            table->cellCount++;
-            table->colCount++;
-        }
-    }
-    //DEBUG
-    //printf("col: %d, row: %d, cell: %d\n", table->colCount, table->rowCount, table->cellCount);
-
-    //windows nerad přidává konec řádku na konec posledního řádku
-    /* FIXME: dělení 0 */
-    /* if (table->colCount != 0)
-        table->rowCount++; */
-
-    //počet delimů + počet řádků = počet buněk
-
-    table->cellCount += table->rowCount;
-    table->colCount = table->cellCount / table->rowCount;
-    //DEBUG
-    //printf("col: %d, row: %d, cell: %d\n", table->colCount, table->rowCount, table->cellCount);
-    return;
-}
-
-/* Inicializace tabulky */
-void initTable(array *table, FILE *inputFile)
-{
-    fseek(inputFile, 0, SEEK_SET);
-    //alokace počtu řádků
-    table->cell = malloc(sizeof(char *) * table->rowCount);
-    if (table->cell == NULL)
-    {
-        fprintf(stderr, "Chyba pri alokaci mista v pameti.");
-        tableDestruct(table);
-        return;
-    }
-    for (int i = 0; i < table->rowCount; i++)
-    {
-
-        table->cell[i] = malloc(sizeof(char *) * table->colCount);
-        if (table->cell == NULL)
-        {
-            fprintf(stderr, "Chyba pri alokaci mista v pameti.");
-            tableDestruct(table);
-            return;
-        }
-        for (int j = 0; j < table->colCount; j++)
-        {
-            //printf("i:%d, j:%d  - %d\n", i, j, table->colCount);
-            //možná by stačilo za 1 dát colCount ověřit
-            table->cell[i][j] = calloc(1, MINCELL);
-            if (table->cell == NULL)
-            {
-                fprintf(stderr, "Chyba pri alokaci mista v pameti.");
-                tableDestruct(table);
-                return;
-            }
-        }
-    }
-    return;
-}
-
 /* Změní velikost řádku o zadaný počet */
 void resizeRowBy(array *table, int by)
 {
@@ -344,6 +218,7 @@ void resizeRowBy(array *table, int by)
     //realokace ukazatelu radku
     //printf("rows: %d\n", table->rowCount);
     //printf("cols: %d\n", table->colCount);
+    //TODO: rozdělit free na cell row col if (by<0)
     rowPointer = realloc(table->cell, sizeof(char *) * table->rowCount);
     if (rowPointer == NULL)
     {
@@ -456,6 +331,278 @@ int resizeCellOn(array *table, int newSize, int row, int col)
     return 1;
 }
 
+/* Nastavení výběru buněk */
+void selectionSet(cmdArray *cmds, selection *selected, int i)
+{
+    char number[1000];
+    int dotCount = 0, numberCount = 0;
+    for (unsigned int j = 1; j < strlen(cmds->cell[i]); j++)
+    {
+        if (cmds->cell[i][j] == ',' || cmds->cell[i][j] == ']')
+        {
+
+            number[numberCount] = '\0';
+            numberCount = 0;
+            dotCount++;
+            switch (dotCount - 1)
+            {
+            case 0:
+                selected->selRow1 = atoi(number);
+                break;
+            case 1:
+                selected->selCol1 = atoi(number);
+                break;
+            case 2:
+                selected->selRow2 = atoi(number);
+                break;
+            case 3:
+                selected->selCol2 = atoi(number);
+                break;
+            }
+        }
+        else if (cmds->cell[i][j] == '_')
+        {
+            number[numberCount] = 0;
+            numberCount++;
+        }
+        else
+        {
+            number[numberCount] = cmds->cell[i][j];
+            numberCount++;
+        }
+    }
+}
+
+/* Vloží řádek nad vybrané buňky */
+void insertRow(array *table, selection *selected)
+{
+    if (selected->selRow1 > 0)
+    {
+        char **tmp;
+        resizeRowBy(table, 1);
+
+        for (int i = table->rowCount - 1; i >= selected->selRow1; i--)
+        {
+            tmp = table->cell[i];
+            table->cell[i] = table->cell[i - 1];
+            table->cell[i - 1] = tmp;
+        }
+    }
+}
+
+/* Vloží řádek pod vybrané buňky */
+void appendRow(array *table, selection *selected)
+{
+    char **tmp;
+    resizeRowBy(table, 1);
+
+    for (int i = table->rowCount - 1; i > selected->selRow1; i--)
+    {
+        tmp = table->cell[i];
+        table->cell[i] = table->cell[i - 1];
+        table->cell[i - 1] = tmp;
+    }
+}
+
+/* TODO: Odstraní vybraný řádek */
+/* void deleteRow(array *table, selection *selected)
+{
+    char **tmp;
+
+    for (int i = table->rowCount - 1; i > selected->selRow1; i--)
+    {
+        tmp = table->cell[i];
+        table->cell[i] = table->cell[i - 1];
+        table->cell[i - 1] = tmp;
+    }
+    resizeRowBy(table, -1);
+} */
+
+/* Rozšifrování CMD_sequence */
+void processCommands(cmdArray *cmds, selection *selected, array *table, int argCount, const char *argValue[])
+{
+    commandsToArray(cmds, argCount, argValue);
+    selectionConstruct(selected);
+    for (int i = 0; i < cmds->cmdCount; i++)
+    {
+        if ((cmds->cell[i][0] == '[') && (cmds->cell[i][strlen(cmds->cell[i]) - 1] == ']'))
+        {
+            selectionSet(cmds, selected, i);
+            //TODO: přidat ještě [min], [max] a [find STR]
+        }
+        else
+        {
+            //uprava struktury
+            if (strstr(cmds->cell[i], "irow") != NULL)
+                insertRow(table, selected);
+            if (strstr(cmds->cell[i], "arow") != NULL)
+                appendRow(table, selected);
+            if (strstr(cmds->cell[i], "drow") != NULL)
+                deleteRow(table, selected);
+            /* if (strstr(cmds->cell[i], "icol") != NULL)
+                insertCol();
+            if (strstr(cmds->cell[i], "acol") != NULL)
+                appendCol();
+            if (strstr(cmds->cell[i], "dcol") != NULL)
+                deleteCol(); */
+
+            //uprava obsahu bunek
+            /* if((strstr(cmds->cell[i], "set") != NULL) && (strstr(cmds->cell[i], "[set]") == NULL)) set();
+            if(strstr(cmds->cell[i], "clear") != NULL) clearCell();
+            if(strstr(cmds->cell[i], "swap") != NULL) swapCells();
+            if(strstr(cmds->cell[i], "sum") != NULL) sum();
+            if(strstr(cmds->cell[i], "avg") != NULL) avg();
+            if(strstr(cmds->cell[i], "count") != NULL) count();
+            if(strstr(cmds->cell[i], "len") != NULL) len(); */
+
+            //příkazy pro práci s dočasnými proměnnými
+            /* if(strstr(cmds->cell[i], "def") != NULL) def();
+            if(strstr(cmds->cell[i], "use") != NULL) use();
+            if(strstr(cmds->cell[i], "inc") != NULL) inc();
+            //FIXME: toto zatím nechápu implementovat jako poslední
+            if(strstr(cmds->cell[i], "[set]") != NULL) tmpSet(); */
+        }
+    }
+}
+
+int openFile(int lastArg, char const *fileName[], FILE **inputFile)
+{
+
+    *inputFile = fopen(fileName[lastArg - 1], "r");
+    if (*inputFile == NULL)
+    {
+        fprintf(stderr, "Chyba pri otevirani souboru.\n");
+        return 0;
+    }
+    else
+    {
+        ////debug
+        //printf("Otevrel se soubor: %s.\n", fileName[lastArg - 1]);
+        return 1;
+    }
+}
+
+/* Uzavře soubor */
+void closeFile(FILE *inputFile)
+{
+    ////debug
+    //printf("Soubor uzavren.\n");
+    fclose(inputFile);
+    return;
+}
+
+/* Kontroluje, zda argumenty byli zadány správně */
+int checkArgs(int argCount, const char *argValue[])
+{
+    /* Pokud ukazatel na .txt není NULL a zároveň byl zadán DELIM, tak musí být počet argumentů 5 nebo počet argumentů musí být 3  */
+    if ((strstr(argValue[argCount - 1], ".txt") != NULL) && ((!strcmp("-d", argValue[DELIMPOS]) && argCount == MAXARGS) || argCount == MINARGS))
+    {
+        return 1;
+    }
+    else
+    {
+        fprintf(stderr, "Program spusten spatne.\n"
+                        "Je potreba zadat [-d DELIM] CMD_SEQUENCE FILE.\n"
+                        "------------------------------------------------------------\n"
+                        "Parametr [-d DELIM] je volitelny.\n"
+                        "------------------------------------------------------------\n"
+                        "Parametr CMD_SEQUENCE je povinny.\n"
+                        "------------------------------------------------------------\n"
+                        "Parametr FILE je take povinny, zadejte ve formatu nazev.txt.\n"
+                        "------------------------------------------------------------\n");
+        return 0;
+    }
+}
+
+/* Nastavení delimu */
+char const *findDelim(int argCount, const char *argValue[])
+{
+    if (!strcmp(argValue[DELIMPOS], "-d") && (argCount == MAXARGS))
+    {
+        char const *delim = argValue[DELIMPOS + 1];
+        return delim;
+    }
+    else
+    {
+        char *delim = " ";
+        return delim;
+    }
+}
+
+/* Spočítá počet řádků a počet sloupců */
+void countRowsAndCols(array *table, FILE *inputFile, const char *delim)
+{
+    char character;
+    while ((character = fgetc(inputFile)) != EOF)
+    {
+        if (character == '\n')
+        {
+            table->rowCount++;
+            table->colCount = 0;
+        }
+
+        if (strchr(delim, character) != NULL)
+        {
+            //počet nalezených znaků delim
+            table->cellCount++;
+            table->colCount++;
+        }
+    }
+    //DEBUG
+    //printf("col: %d, row: %d, cell: %d\n", table->colCount, table->rowCount, table->cellCount);
+
+    //windows nerad přidává konec řádku na konec posledního řádku
+    /* FIXME: dělení 0 */
+    /* if (table->colCount != 0)
+        table->rowCount++; */
+
+    //počet delimů + počet řádků = počet buněk
+
+    table->cellCount += table->rowCount;
+    table->colCount = table->cellCount / table->rowCount;
+    //DEBUG
+    //printf("col: %d, row: %d, cell: %d\n", table->colCount, table->rowCount, table->cellCount);
+    return;
+}
+
+/* Inicializace tabulky */
+void initTable(array *table, FILE *inputFile)
+{
+    fseek(inputFile, 0, SEEK_SET);
+    //alokace počtu řádků
+    table->cell = malloc(sizeof(char *) * table->rowCount);
+    if (table->cell == NULL)
+    {
+        fprintf(stderr, "Chyba pri alokaci mista v pameti.");
+        tableDestruct(table);
+        return;
+    }
+    for (int i = 0; i < table->rowCount; i++)
+    {
+
+        table->cell[i] = malloc(sizeof(char *) * table->colCount);
+        if (table->cell == NULL)
+        {
+            fprintf(stderr, "Chyba pri alokaci mista v pameti.");
+            tableDestruct(table);
+            return;
+        }
+        for (int j = 0; j < table->colCount; j++)
+        {
+            //printf("i:%d, j:%d  - %d\n", i, j, table->colCount);
+            //možná by stačilo za 1 dát colCount ověřit
+            table->cell[i][j] = calloc(1, MINCELL);
+            if (table->cell == NULL)
+            {
+                fprintf(stderr, "Chyba pri alokaci mista v pameti.");
+                tableDestruct(table);
+                return;
+            }
+        }
+    }
+    return;
+}
+
 /* Rozdělí data ze souboru do 2D pole */
 int fileToTable(array *table, FILE *inputFile, const char *delim)
 {
@@ -537,12 +684,17 @@ int main(int argc, const char *argv[])
             if (fileToTable(&table, inputFile, delim))
             {
                 cmdArray cmds;
+                selection selected;
+                //resizeRowBy(&table, 10);
+                /* //TODO:  Rozšifrování CMD_SEQUENCE (příkazy oddělené ;) req */
 
-                resizeRowBy(&table, 10);
-                //TODO:  Rozšifrování CMD_SEQUENCE (příkazy oddělené ;) req
-                findCommands(&cmds, argc, argv);
-                //TODO: vypsání dat
+                processCommands(&cmds, &selected, &table, argc, argv);
+                //printf("selected: %d[%d, %d]\n", cmds.cell[selected.selRow1 - 1][selected.selCol1 - 1], selected.selRow1, selected.selCol1);
+                /* //TODO: vypsání dat */
+                //printf("%d, %d, %d, %d", selected.selRow1, selected.selCol1, selected.selRow2, selected.selCol2);
+                //printf("%d", table.rowCount);
                 printTable(&table, delim[0]);
+                cmdDestruct(&cmds);
             }
 
             //TODO: free all všeho nad čím se provedl malloc nebo realloc
